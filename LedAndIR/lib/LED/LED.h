@@ -6,25 +6,25 @@
 
 #include <Arduino.h>
 #include <FastLED.h>
-
 #define MAX_HUE 255
 #define MAX_C_VALUE 255
 #define MIN_C_VALUE 0
 
-#include <FastLED.h>
 #include <colorpalettes.h>
 
 enum effects {
     DISABLED = 0,
     LIGHT_WHITE,
+    RAINBOW_FADE,
+    RAINBOW_LOOP,
+    CYLON_V1,
+    CYLON_V2,
+    POLICE_LIGHTS_SINGLE,
+    POLICE_LIGHTS_SOLID,
     FULL_WHITE,
     FULL_RED,
     FULL_GREEN,
     FULL_BLUE,
-    RAINBOW_FADE,
-    RAINBOW_LOOP,
-    POLICE_LIGHTS_SINGLE,
-    POLICE_LIGHTS_SOLID,
 
 };
 
@@ -131,7 +131,6 @@ public:
 
     void decreaseBrightness();
 
-
 private:
     struct CRGB *ledStorage;
     int ledCount;
@@ -147,6 +146,7 @@ private:
     Saturation saturation = Saturation();
     LedDelay delay = LedDelay();
     int curIndex = 0;
+    bool bounceDirectionForward = true;
 
     void markModeChanged() {
         modeChanged = true;
@@ -172,6 +172,16 @@ private:
     int antipodal_index(int i);
 
     void ems_lightsALL();
+
+    void color_bounce();
+
+    void color_bounceFADE();
+
+    int adjacent_cw(int i);
+
+    int adjacent_ccw(int i);
+
+    void changeColorValue(int index, byte value);
 };
 
 

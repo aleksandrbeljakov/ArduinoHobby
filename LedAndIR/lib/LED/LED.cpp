@@ -4,7 +4,7 @@
 LEDEffects::LEDEffects(CRGB *ledStorage, int ledCount, byte maxBrightness, effects initMode, byte brightnessStep) {
     this->mode = initMode;
     this->maxBrightness = maxBrightness;
-    this->currentBrightness = maxBrightness;
+    this->currentBrightness = maxBrightness / 2;
     this->brightnessStep = brightnessStep;
     this->ledStorage = ledStorage;
     this->ledCount = ledCount;
@@ -52,7 +52,6 @@ void LEDEffects::tick(bool (*interrupted)(void)) {
         return;
     }
     if (!powerOn) {
-        //  Serial.println(F("Led is disabled"));
         return;
     }
     if (delay.isWait()) {
@@ -82,6 +81,12 @@ void LEDEffects::tick(bool (*interrupted)(void)) {
             break;
         case RAINBOW_LOOP:
             rainbow_loop();
+            break;
+        case CYLON_V1:
+            color_bounce();
+            break;
+        case CYLON_V2:
+            color_bounceFADE();
             break;
         case POLICE_LIGHTS_SINGLE:
             ems_lightsONE();
@@ -223,6 +228,73 @@ void LEDEffects::ems_lightsALL() {                  //-EMERGENCY LIGHTS (TWO COL
     markRedraw();
 }
 
+void LEDEffects::color_bounce() {
+    if (modeChanged) {
+        hue.setHue(0);
+        bounceDirectionForward = true;
+    }
+    if (bounceDirectionForward) {
+        curIndex = curIndex + 1;
+        if (curIndex == ledCount) {
+            bounceDirectionForward = false;
+            curIndex = curIndex - 1;
+        }
+    } else {
+        curIndex = curIndex - 1;
+        if (curIndex == 0) {
+            bounceDirectionForward = true;
+        }
+    }
+    for (int i = 0; i < ledCount; i++) {
+        if (i == curIndex) {
+            ledStorage[i] = CHSV(hue.get(), saturation.get(), 255);
+        } else {
+            ledStorage[i] = CHSV(0, 0, 0);
+        }
+    }
+    delay.set(20);
+    markRedraw();
+}
+
+void LEDEffects::color_bounceFADE() {
+    if (modeChanged) {
+        hue.setHue(0);
+    }
+    if (bounceDirectionForward) {
+        curIndex = curIndex + 1;
+        if (curIndex == ledCount) {
+            bounceDirectionForward = false;
+            curIndex = curIndex - 1;
+        }
+    } else {
+        curIndex = curIndex - 1;
+        if (curIndex == 0) {
+            bounceDirectionForward = true;
+        }
+    }
+    int iL1 = adjacent_cw(curIndex);
+    int iL2 = adjacent_cw(iL1);
+    int iL3 = adjacent_cw(iL2);
+    int iR1 = adjacent_ccw(curIndex);
+    int iR2 = adjacent_ccw(iR1);
+    int iR3 = adjacent_ccw(iR2);
+    for (int i = 0; i < ledCount; i++) {
+        if (i == curIndex) changeColorValue(i, MAX_C_VALUE);
+        else if (i == iL1) changeColorValue(i, 150);
+        else if (i == iL2) changeColorValue(i, 80);
+        else if (i == iL3) changeColorValue(i, 20);
+        else if (i == iR1) changeColorValue(i, 150);
+        else if (i == iR2) changeColorValue(i, 80);
+        else if (i == iR3) changeColorValue(i, 20);
+        else ledStorage[i] = CHSV(0, 0, MIN_C_VALUE);
+    }
+    delay.set(80);
+    markRedraw();
+}
+
+void LEDEffects::changeColorValue(int index, byte value) {
+    ledStorage[index] = CHSV(hue.get(), saturation.get(), value);
+}
 
 int LEDEffects::antipodal_index(int i) {
     int topIndex = ledCount / 2;
@@ -231,4 +303,25 @@ int LEDEffects::antipodal_index(int i) {
         iN = (i + topIndex) % ledCount;
     }
     return iN;
+}
+
+int LEDEffects::adjacent_cw(int i) {
+    int r;
+    if (i < ledCount - 1) {
+        r = i + 1;
+    } else {
+        r = 0;
+    }
+    return r;
+}
+
+//---FIND ADJACENT INDEX COUNTER-CLOCKWISE
+int LEDEffects::adjacent_ccw(int i) {
+    int r;
+    if (i > 0) {
+        r = i - 1;
+    } else {
+        r = ledCount - 1;
+    }
+    return r;
 }

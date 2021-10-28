@@ -8,7 +8,6 @@
 
 
 #define IR_RECEIVE_PIN       2// To be compatible with interrupt example, pin 2 is chosen here.
-#define LED_PIN      13
 
 #define BTN_CH_MINUS  0x4E5BA3AD
 #define BTN_PWR  0xE51CA6AD
@@ -18,25 +17,24 @@
 
 #include <FastLED.h>
 #include <IRLremote.h>
-#include "../lib/LED/LED.h"
+#include <LED.h>
+//#include <microLED.h>   // подключаем библу
 
 CHashIR IRLremote;
 uint32_t IRdata;
 struct CRGB ledStorage[LED_COUNT];
-LEDEffects leds(ledStorage, LED_COUNT, 150);
-//CLEDController &controller = FastLED.addLeds<WS2811, LED_DT, GRB>(ledStorage, LED_COUNT);
+
+
+LEDEffects leds(ledStorage, LED_COUNT, 255);
 
 bool processInterrupted();
 
 void setup() {
     Serial.begin(115200);
-    FastLED.addLeds<WS2811, LED_DT, GRB>(ledStorage, LED_COUNT);
-    //LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
+    FastLED.addLeds<WS2812B, LED_DT, GRB>(ledStorage, LED_COUNT).setCorrection(TypicalLEDStrip);
 
     leds.init();
-    /*
-     * Start the receiver, enable feedback LED and take LED feedback pin from the internal boards definition
-     */
+
     IRLremote.begin(IR_RECEIVE_PIN);
 
     Serial.print(F("Ready to receive IR signals at pin "));
